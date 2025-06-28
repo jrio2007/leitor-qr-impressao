@@ -1,53 +1,33 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Leitor QR</title>
-  <link rel="manifest" href="manifest.json">
   <script src="https://unpkg.com/html5-qrcode"></script>
 </head>
 <body>
-  <div id="reader" style="width:300px; margin:auto; padding-top:50px;"></div>
-  <audio id="beep-sound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
+  <div id="reader" style="width:300px;"></div>
 
   <script>
-    const beep = document.getElementById("beep-sound");
-
-    const html5QrCode = new Html5Qrcode("reader");
-
-    function iniciarLeitor(cameraId) {
-      html5QrCode.start(
-        cameraId,
-        { fps: 10, qrbox: 250 },
-        decodedText => {
-          beep.play();
-          fetch("http://192.168.31.67:5000/imprimir", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ codigo: decodedText })
-          });
-
-          html5QrCode.stop().then(() => {
-            setTimeout(() => iniciarLeitor(cameraId), 1000);
-          });
-        },
-        error => {}
-      );
+    function enviarCodigo(codigo) {
+      fetch("http://192.168.0.10:5000/imprimir", { // <-- IP do seu PC
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ codigo: codigo })
+      }).then(response => {
+        alert("Enviado para impressão!");
+      }).catch(err => {
+        alert("Erro ao enviar: " + err);
+      });
     }
 
-    Html5Qrcode.getCameras().then(devices => {
-      if (devices.length > 0) {
-        const backCamera = devices.find(d => d.label.toLowerCase().includes("back")) || devices[0];
-        iniciarLeitor(backCamera.id);
-      } else {
-        alert("Nenhuma câmera detectada.");
-      }
-    }).catch(err => {
-      alert("Erro ao acessar câmera: " + err);
-    });
+    function onScanSuccess(decodedText, decodedResult) {
+      html5QrcodeScanner.clear();
+      enviarCodigo(decodedText);
+    }
+
+    const html5QrcodeScanner = new Html5QrcodeScanner(
+      "reader", { fps: 10, qrbox: 250 });
+    html5QrcodeScanner.render(onScanSuccess);
   </script>
 </body>
 </html>
