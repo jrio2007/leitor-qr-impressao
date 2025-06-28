@@ -1,33 +1,28 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
-  <title>Leitor QR</title>
-  <script src="https://unpkg.com/html5-qrcode"></script>
+  <meta charset="UTF-8">
+  <title>Teste de Impressão</title>
 </head>
 <body>
-  <div id="reader" style="width:300px;"></div>
+  <h2>Teste de Envio para Impressão</h2>
+  <button onclick="enviarCodigo()">Enviar código simulado</button>
 
   <script>
-    function enviarCodigo(codigo) {
-      fetch("http://192.168.31.67:5000/imprimir", { // <-- IP do seu PC
+    function enviarCodigo() {
+      fetch("http://192.168.31.67:5000/imprimir", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ codigo: codigo })
-      }).then(response => {
-        alert("Enviado para impressão!");
-      }).catch(err => {
-        alert("Erro ao enviar: " + err);
-      });
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          codigo: "250624DWX72D48quebarVERIF123"
+        })
+      })
+      .then(response => response.json())
+      .then(data => alert("Resposta do servidor: " + data.mensagem))
+      .catch(error => alert("Erro ao enviar: " + error));
     }
-
-    function onScanSuccess(decodedText, decodedResult) {
-      html5QrcodeScanner.clear();
-      enviarCodigo(decodedText);
-    }
-
-    const html5QrcodeScanner = new Html5QrcodeScanner(
-      "reader", { fps: 10, qrbox: 250 });
-    html5QrcodeScanner.render(onScanSuccess);
   </script>
 </body>
 </html>
