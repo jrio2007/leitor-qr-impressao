@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leitor QR</title>
+  <link rel="manifest" href="manifest.json">
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
+    }
+  </script>
+</head>
+<body>
+  <div id="reader" style="width: 300px; margin: auto; padding-top: 50px;"></div>
+  <audio id="beep-sound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
+
+  <script>
+    function enviarCodigo(codigo) {
+      fetch("http://192.168.31.67:5000/imprimir", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ codigo: codigo })
+      });
+    }
+
+    function onScanSuccess(decodedText, decodedResult) {
+      document.getElementById("beep-sound").play();
+      enviarCodigo(decodedText);
+      html5QrcodeScanner.clear();
+      setTimeout(() => html5QrcodeScanner.render(onScanSuccess), 1000);
+    }
+
+    const html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+    html5QrcodeScanner.render(onScanSuccess);
+  </script>
+</body>
+</html>
