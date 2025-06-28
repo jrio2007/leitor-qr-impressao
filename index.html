@@ -44,7 +44,7 @@
             console.log("QR LIDO:", decodedText);
             beep.play();
 
-            fetch("https://f64a-179-125-132-238.ngrok-free.app/imprimir", {
+            fetch("https://aa0c-179-125-132-238.ngrok-free.app/imprimir", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json"
@@ -59,7 +59,7 @@
               setTimeout(() => {
                 html5QrCode.start(cameraId, { fps: 10, qrbox: 250 }, decodedText => {
                   beep.play();
-                  fetch("https://f64a-179-125-132-238.ngrok-free.app/imprimir", {
+                  fetch("https://aa0c-179-125-132-238.ngrok-free.app/imprimir", {
                     method: "POST",
                     headers: {
                       "Content-Type": "application/json"
