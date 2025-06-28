@@ -1,86 +1,51 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Leitor QR</title>
   <link rel="manifest" href="manifest.json">
-  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js');
-    }
-  </script>
-  <style>
-    body {
-      text-align: center;
-      font-family: sans-serif;
-      background-color: #f4f4f4;
-    }
-    #reader {
-      width: 300px;
-      margin: auto;
-      padding-top: 50px;
-    }
-  </style>
+  <script src="https://unpkg.com/html5-qrcode"></script>
 </head>
 <body>
-  <div id="reader"></div>
+  <div id="reader" style="width:300px; margin:auto; padding-top:50px;"></div>
   <audio id="beep-sound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 
   <script>
     const beep = document.getElementById("beep-sound");
 
-    Html5Qrcode.getCameras().then(cameras => {
-      if (cameras && cameras.length) {
-        const cameraId = cameras[cameras.length - 1].id; // traseira
+    const html5QrCode = new Html5Qrcode("reader");
 
-        const html5QrCode = new Html5Qrcode("reader");
-        html5QrCode.start(
-          cameraId,
-          {
-            fps: 10,
-            qrbox: 250
-          },
-          decodedText => {
-            console.log("QR LIDO:", decodedText);
-            beep.play();
+    function iniciarLeitor(cameraId) {
+      html5QrCode.start(
+        cameraId,
+        { fps: 10, qrbox: 250 },
+        decodedText => {
+          beep.play();
+          fetch("http://192.168.31.67:5000/imprimir", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ codigo: decodedText })
+          });
 
-            fetch("http://192.168.31.67:5000/imprimir", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify({ codigo: decodedText })
-            })
-            .then(res => res.json())
-            .then(data => console.log("Servidor:", data))
-            .catch(err => console.error("Erro:", err));
+          html5QrCode.stop().then(() => {
+            setTimeout(() => iniciarLeitor(cameraId), 1000);
+          });
+        },
+        error => {}
+      );
+    }
 
-            html5QrCode.stop().then(() => {
-              setTimeout(() => {
-                html5QrCode.start(cameraId, { fps: 10, qrbox: 250 }, decodedText => {
-                  beep.play();
-                  fetch("http://192.168.31.67:5000/imprimir", {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ codigo: decodedText })
-                  });
-                });
-              }, 1000);
-            });
-          },
-          error => {
-            // Ignora erros de leitura
-          }
-        );
+    Html5Qrcode.getCameras().then(devices => {
+      if (devices.length > 0) {
+        const backCamera = devices.find(d => d.label.toLowerCase().includes("back")) || devices[0];
+        iniciarLeitor(backCamera.id);
       } else {
-        alert("Nenhuma câmera disponível");
+        alert("Nenhuma câmera detectada.");
       }
     }).catch(err => {
-      console.error("Erro ao acessar câmera:", err);
       alert("Erro ao acessar câmera: " + err);
     });
   </script>
