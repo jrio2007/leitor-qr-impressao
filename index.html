@@ -6,6 +6,7 @@
   <title>Leitor QR</title>
   <link rel="manifest" href="manifest.json">
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <script src="config.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js');
@@ -36,46 +37,38 @@
         const cameraId = cameras[cameras.length - 1].id; // traseira
 
         const html5QrCode = new Html5Qrcode("reader");
-        html5QrCode.start(
-          cameraId,
-          {
-            fps: 10,
-            qrbox: 250
-          },
-          decodedText => {
-            console.log("QR LIDO:", decodedText);
-            beep.play();
 
-            fetch("https://aa0c-179-125-132-238.ngrok-free.app/imprimir", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify({ codigo: decodedText })
-            })
-            .then(res => res.json())
-            .then(data => console.log("Servidor:", data))
-            .catch(err => console.error("Erro:", err));
+        const iniciarLeitura = () => {
+          html5QrCode.start(
+            cameraId,
+            { fps: 10, qrbox: 250 },
+            decodedText => {
+              console.log("QR LIDO:", decodedText);
+              beep.play();
 
-            html5QrCode.stop().then(() => {
-              setTimeout(() => {
-                html5QrCode.start(cameraId, { fps: 10, qrbox: 250 }, decodedText => {
-                  beep.play();
-                  fetch("https://aa0c-179-125-132-238.ngrok-free.app/imprimir", {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ codigo: decodedText })
-                  });
-                });
-              }, 1000);
-            });
-          },
-          error => {
-            // Ignora erros de leitura
-          }
-        );
+              fetch(`${NGROK_URL}/imprimir`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ codigo: decodedText })
+              })
+              .then(res => res.json())
+              .then(data => console.log("Servidor:", data))
+              .catch(err => console.error("Erro:", err));
+
+              html5QrCode.stop().then(() => {
+                setTimeout(iniciarLeitura, 1000); // Reinicia o scanner após 1s
+              });
+            },
+            error => {
+              // Ignora erros de leitura
+            }
+          );
+        };
+
+        iniciarLeitura();
+
       } else {
         alert("Nenhuma câmera disponível");
       }
